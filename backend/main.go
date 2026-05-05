@@ -32,9 +32,10 @@ func main() {
 		c.Next()
 	})
 
-	// Auth routes
+	// Auth & Password routes
 	r.POST("/api/login", handlers.Login)
-	r.POST("/api/register", handlers.Register)
+	r.POST("/api/forgot-password", handlers.ForgotPassword)
+	r.POST("/api/reset-password", handlers.ResetPassword)
 
 	// Protected routes
 	authorized := r.Group("/api")
@@ -44,6 +45,16 @@ func main() {
 		authorized.POST("/logs/start", handlers.StartLog)
 		authorized.POST("/logs/stop", handlers.StopLog)
 		authorized.GET("/report", handlers.GenerateExcelReport)
+		authorized.POST("/change-password", handlers.ChangePassword)
+
+		// Admin routes
+		admin := authorized.Group("/admin")
+		admin.Use(middleware.AdminMiddleware())
+		{
+			admin.GET("/users", handlers.GetUsers)
+			admin.POST("/users", handlers.CreateUser)
+			admin.GET("/users/:id/logs", handlers.GetUserLogs)
+		}
 	}
 
 	port := os.Getenv("PORT")

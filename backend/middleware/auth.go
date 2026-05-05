@@ -38,6 +38,24 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		userID := uint(claims["user_id"].(float64))
 		c.Set("userID", userID)
+
+		// Set role in context if present
+		if role, ok := claims["role"].(string); ok {
+			c.Set("role", role)
+		}
+
+		c.Next()
+	}
+}
+
+func AdminMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get("role")
+		if !exists || role != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Admin privileges required"})
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 }

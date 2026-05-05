@@ -22,13 +22,18 @@
         </div>
       </template>
       <template #footer>
-        <p class="text-center text-sm text-500 m-0">Inicia sesión para registrar tu jornada.</p>
+        <div class="flex flex-column align-items-center gap-2 mt-3">
+          <p class="text-center text-sm text-500 m-0">Inicia sesión para registrar tu jornada.</p>
+          <NuxtLink to="/forgot-password" class="text-sm text-primary no-underline hover:underline">¿Olvidaste tu contraseña?</NuxtLink>
+        </div>
       </template>
     </Card>
   </div>
 </template>
 
 <script setup>
+import { useToast } from 'primevue/usetoast'
+
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
@@ -51,8 +56,11 @@ const handleLogin = async () => {
 
     if (error.value) throw error.value
 
-    // Save token
+    // Save token and user details
     localStorage.setItem('token', data.value.token)
+    localStorage.setItem('user', JSON.stringify(data.value.user))
+    localStorage.setItem('role', data.value.user.role || 'user')
+    
     toast.add({ severity: 'success', summary: 'Éxito', detail: 'Bienvenido!', life: 3000 })
     router.push('/')
   } catch (err) {

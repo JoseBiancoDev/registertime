@@ -1,6 +1,6 @@
 module github.com/bianquiviri/control-horario
 
-go 1.22
+go 1.24
 
 require (
 	github.com/gin-gonic/gin v1.9.1
@@ -14,3 +14,5 @@ require (
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.7
 )
+
+require github.com/brianvoe/gofakeit/v6 v6.28.0 // indirect

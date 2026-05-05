@@ -10,10 +10,13 @@ type User struct {
 	Email     string         `gorm:"uniqueIndex;not null" json:"email"`
 	Password  string         `gorm:"not null" json:"-"`
 	Name      string         `json:"name"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
-	TimeLogs  []TimeLog      `json:"time_logs,omitempty"`
+	Role          string         `gorm:"default:'user';not null" json:"role"`
+	ResetToken    string         `json:"-"`
+	ResetTokenExp *time.Time     `json:"-"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
+	TimeLogs      []TimeLog      `json:"time_logs,omitempty"`
 }
 
 type TimeLog struct {
@@ -22,6 +25,7 @@ type TimeLog struct {
 	StartTime time.Time      `gorm:"not null" json:"start_time"`
 	EndTime   *time.Time     `json:"end_time"`
 	Duration  float64        `json:"duration_hours"` // In hours
+	WorkMode  string         `json:"work_mode"`      // remote or on-site
 	Comment   string         `json:"comment"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`

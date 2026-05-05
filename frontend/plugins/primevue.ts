@@ -7,14 +7,24 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
+import Dropdown from 'primevue/dropdown'
+import Dialog from 'primevue/dialog'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
+import Tooltip from 'primevue/tooltip'
 
 export default defineNuxtPlugin((nuxtApp) => {
     nuxtApp.vueApp.use(PrimeVue, { ripple: true })
     nuxtApp.vueApp.use(ToastService)
+    nuxtApp.vueApp.directive('tooltip', Tooltip)
     nuxtApp.vueApp.component('Button', Button)
     nuxtApp.vueApp.component('InputText', InputText)
     nuxtApp.vueApp.component('Card', Card)
     nuxtApp.vueApp.component('DataTable', DataTable)
     nuxtApp.vueApp.component('Column', Column)
     nuxtApp.vueApp.component('Toast', Toast)
+    nuxtApp.vueApp.component('Dropdown', Dropdown)
+    nuxtApp.vueApp.component('Dialog', Dialog)
+    nuxtApp.vueApp.component('TabView', TabView)
+    nuxtApp.vueApp.component('TabPanel', TabPanel)
 })

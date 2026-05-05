@@ -19,9 +19,19 @@ func StartLog(c *gin.Context) {
 		return
 	}
 
+	var req struct {
+		WorkMode string `json:"work_mode" binding:"required"`
+	}
+	
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Work mode is required (Presencial or Remoto)"})
+		return
+	}
+
 	log := models.TimeLog{
 		UserID:    userID,
 		StartTime: time.Now(),
+		WorkMode:  req.WorkMode,
 	}
 
 	if err := utils.DB.Create(&log).Error; err != nil {

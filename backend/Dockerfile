@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
@@ -8,11 +8,11 @@ RUN apk add --no-cache gcc musl-dev
 # Copy go mod file
 COPY go.mod ./
 
-# Tidy and download dependencies to generate go.sum
-RUN go mod tidy && go mod download
-
 # Copy the rest of the code
 COPY . .
+
+# Tidy and download dependencies to generate go.sum
+RUN go mod tidy && go mod download
 
 # Build the application
 RUN go build -o main .
