@@ -7,10 +7,10 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
+import Tag from 'primevue/tag'
 import Dropdown from 'primevue/dropdown'
+import Calendar from 'primevue/calendar'
 import Dialog from 'primevue/dialog'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
 import Tooltip from 'primevue/tooltip'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -23,8 +23,8 @@ export default defineNuxtPlugin((nuxtApp) => {
     nuxtApp.vueApp.component('DataTable', DataTable)
     nuxtApp.vueApp.component('Column', Column)
     nuxtApp.vueApp.component('Toast', Toast)
+    nuxtApp.vueApp.component('Tag', Tag)
     nuxtApp.vueApp.component('Dropdown', Dropdown)
+    nuxtApp.vueApp.component('Calendar', Calendar)
     nuxtApp.vueApp.component('Dialog', Dialog)
-    nuxtApp.vueApp.component('TabView', TabView)
-    nuxtApp.vueApp.component('TabPanel', TabPanel)
 })

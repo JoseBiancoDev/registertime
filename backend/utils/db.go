@@ -38,18 +38,18 @@ func InitDB() {
 
 	fmt.Println("Database connected and migrated")
 	
-	SeedDB()
+	SeedDB(false) // Auto-seed if empty
 }
 
-func SeedDB() {
+func SeedDB(force bool) {
 	var count int64
 	DB.Model(&models.User{}).Count(&count)
-	if count > 0 {
+	if count > 0 && !force {
 		return // DB already seeded
 	}
 
 	log.Println("Starting database seeding...")
-	gofakeit.Seed(0) // Initialize random seed
+	gofakeit.Seed(0)
 
 	// 1. Create Admin
 	hashedAdminPassword, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
@@ -59,11 +59,9 @@ func SeedDB() {
 		Name:     "Administrador",
 		Role:     "admin",
 	}
-	if err := DB.Create(&admin).Error; err != nil {
-		log.Printf("Failed to seed admin user: %v", err)
-	} else {
-		log.Println("Admin user seeded: admin@admin.com / admin123")
-	}
+	// Use Upsert or check to avoid duplicates if forced
+	DB.Where(models.User{Email: admin.Email}).FirstOrCreate(&admin)
+	log.Println("Admin user ensured: admin@admin.com / admin123")
 
 	// 2. Create 100 Users
 	hashedUserPassword, _ := bcrypt.GenerateFromPassword([]byte("user123"), bcrypt.DefaultCost)
@@ -77,14 +75,11 @@ func SeedDB() {
 		}
 		
 		if err := DB.Create(&user).Error; err != nil {
-			log.Printf("Error creating user: %v", err)
 			continue
 		}
 
-		// 3. Create Time Logs for each user (random between 5 and 20 logs in the last 30 days)
 		numLogs := gofakeit.Number(5, 20)
 		for j := 0; j < numLogs; j++ {
-			// Random start date within the last 30 days
 			daysAgo := gofakeit.Number(1, 30)
 			startHour := gofakeit.Number(8, 10)
 			startMinute := gofakeit.Number(0, 59)
@@ -92,9 +87,7 @@ func SeedDB() {
 			startTime := time.Now().AddDate(0, 0, -daysAgo)
 			startTime = time.Date(startTime.Year(), startTime.Month(), startTime.Day(), startHour, startMinute, 0, 0, startTime.Location())
 			
-			// Duration between 4 and 9 hours
 			durationHours := float64(gofakeit.Number(4, 9)) + gofakeit.Float64Range(0.0, 0.99)
-			
 			endTime := startTime.Add(time.Duration(durationHours * float64(time.Hour)))
 			
 			workMode := "Presencial"
@@ -114,5 +107,5 @@ func SeedDB() {
 			DB.Create(&timeLog)
 		}
 	}
-	log.Println("Database seeding completed successfully. 100 users created.")
+	log.Println("Database seeding completed.")
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -12,8 +13,16 @@ import (
 )
 
 func main() {
+	seed := flag.Bool("seed", false, "Force database seeding")
+	flag.Parse()
+
 	// Initialize Database
 	utils.InitDB()
+
+	if *seed {
+		utils.SeedDB(true)
+		log.Println("Manual seeding completed.")
+	}
 
 	r := gin.Default()
 
@@ -22,7 +31,7 @@ func main() {
 
 	// CORS
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // Update this for production
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		if c.Request.Method == "OPTIONS" {
@@ -54,6 +63,9 @@ func main() {
 			admin.GET("/users", handlers.GetUsers)
 			admin.POST("/users", handlers.CreateUser)
 			admin.GET("/users/:id/logs", handlers.GetUserLogs)
+			admin.POST("/users/:id/stop", handlers.AdminStopLog)
+			admin.POST("/logs/manual", handlers.AdminAddLog)
+			admin.GET("/users/:id/report/monthly", handlers.GetUserMonthlyReport)
 		}
 	}
 

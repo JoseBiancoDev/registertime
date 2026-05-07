@@ -9,23 +9,30 @@ Este proyecto es un sistema de control de horario desarrollado con **Go (Gin)** 
 - 📧 **Notificaciones**: Avisos por correo al finalizar jornadas.
 - 📊 **Reportes**: Generación de reportes detallados en Excel.
 - 🐳 **Docker**: Ejecución aislada sin dependencias locales.
-- ✅ **Tests**: Cobertura de pruebas unitarias.
+- ✅ **Tests & Seeders**: Cobertura de pruebas y generación de datos iniciales.
 
 ## Requisitos
 - Docker y Docker Compose.
 
 ## Inicio Rápido
 
-1. Clona el repositorio (si no lo has hecho ya).
-2. Configura las variables de entorno en el archivo `.env` (especialmente las credenciales SMTP para correos).
+1. Clona el repositorio.
+2. Configura las variables de entorno en el archivo `.env`.
 3. Levanta el sistema:
    ```bash
    docker-compose up --build
    ```
 4. Accede a `http://localhost:3000`.
 
-## Usuarios
-Para crear el primer usuario, puedes usar el endpoint `/api/register` mediante un cliente REST (como Postman o curl) o implementar una página de registro. Por defecto, el sistema espera que el administrador cree los usuarios.
+## Usuarios y Seeders
+El sistema crea automáticamente un administrador al iniciar:
+- **Email**: `admin@admin.com`
+- **Password**: `admin123`
+
+Para generar **100 usuarios de prueba** adicionales con registros de horas, puedes ejecutar el seeder manualmente:
+```bash
+docker-compose exec backend ./main -seed
+```
 
 ## Pruebas
 Para ejecutar los tests del backend:
