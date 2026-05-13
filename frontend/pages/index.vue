@@ -71,6 +71,60 @@
           </div>
         </TabPanel>
 
+        <!-- Tab Actividades -->
+        <TabPanel header="Actividades">
+          <Card>
+            <template #title>
+              <div class="flex justify-content-between align-items-center">
+                <span>Gestión de Actividades</span>
+                <Button label="Nueva Actividad" icon="pi pi-plus" size="small" @click="showCreateActivityDialog = true" />
+              </div>
+            </template>
+            <template #content>
+              <DataTable :value="activitiesStore.activities" :loading="activitiesStore.loading" :rows="10" paginator responsiveLayout="scroll" class="p-datatable-sm" v-model:filters="activityFilters" filterDisplay="menu" :globalFilterFields="['name', 'description', 'estado', 'creado_by.name', 'asignado_to.name']">
+                <template #header>
+                    <div class="flex justify-content-end">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search" />
+                            <InputText v-model="activityFilters['global'].value" placeholder="Buscar actividad..." />
+                        </span>
+                    </div>
+                </template>
+                <Column field="created_at" header="Fecha">
+                  <template #body="slotProps">
+                    {{ formatDate(slotProps.data.created_at) }}
+                  </template>
+                </Column>
+                <Column field="name" header="Nombre"></Column>
+                <Column header="Asignado Por">
+                  <template #body="slotProps">
+                    {{ slotProps.data.creado_by?.name || 'Sistema' }}
+                  </template>
+                </Column>
+                <Column header="Asignado A">
+                  <template #body="slotProps">
+                    {{ slotProps.data.asignado_to?.name || 'No asignado' }}
+                  </template>
+                </Column>
+                <Column field="estado" header="Estado">
+                  <template #body="slotProps">
+                    <Tag :value="slotProps.data.estado.toUpperCase()" :severity="getSeverity(slotProps.data.estado)" />
+                  </template>
+                </Column>
+                <Column header="Acciones">
+                  <template #body="slotProps">
+                    <div class="flex gap-2">
+                      <Button v-if="slotProps.data.estado === 'pendiente'" icon="pi pi-play" class="p-button-rounded p-button-success p-button-text" @click="updateActivityStatus(slotProps.data.id, 'iniciado')" v-tooltip="'Iniciar'" />
+                      <Button v-if="slotProps.data.estado === 'iniciado'" icon="pi pi-check" class="p-button-rounded p-button-warning p-button-text" @click="openFinishActivityDialog(slotProps.data.id)" v-tooltip="'Finalizar'" />
+                      <Button icon="pi pi-eye" class="p-button-rounded p-button-info p-button-text" @click="viewActivity(slotProps.data)" v-tooltip="'Ver Detalles'" />
+                    </div>
+                  </template>
+                </Column>
+              </DataTable>
+            </template>
+          </Card>
+        </TabPanel>
+
         <!-- Admin Tab -->
         <TabPanel v-if="role === 'admin'" header="Administración">
           <Card>
@@ -81,7 +135,15 @@
               </div>
             </template>
             <template #content>
-              <DataTable :value="users" :rows="10" paginator responsiveLayout="scroll" class="p-datatable-sm">
+              <DataTable :value="users" :rows="10" paginator responsiveLayout="scroll" class="p-datatable-sm" v-model:filters="userFilters" filterDisplay="menu" :globalFilterFields="['id', 'name', 'email', 'role']">
+                <template #header>
+                    <div class="flex justify-content-end">
+                        <span class="p-input-icon-left">
+                            <i class="pi pi-search" />
+                            <InputText v-model="userFilters['global'].value" placeholder="Buscar usuario..." />
+                        </span>
+                    </div>
+                </template>
                 <Column field="id" header="ID" sortable></Column>
                 <Column field="name" header="Nombre" sortable></Column>
                 <Column field="email" header="Email" sortable></Column>
@@ -155,12 +217,85 @@
         </Column>
       </DataTable>
     </Dialog>
+    <Dialog v-model:visible="showCreateActivityDialog" header="Nueva Actividad" modal :style="{ width: '500px' }">
+      <div class="flex flex-column gap-3 pt-3">
+        <div class="flex flex-column gap-2">
+          <label>Nombre de la Actividad</label>
+          <InputText v-model="newActivity.name" class="w-full" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label>Descripción</label>
+          <Textarea v-model="newActivity.description" rows="3" class="w-full" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label>Asignar a (Opcional)</label>
+          <Dropdown v-model="newActivity.asignado_to_id" :options="users" optionLabel="name" optionValue="id" placeholder="Selecciona un empleado" showClear filter :virtualScrollerOptions="{ itemSize: 38 }" class="w-full" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label>Adjuntar Archivos (Imágenes o PDF)</label>
+          <FileUpload name="files" :customUpload="true" @uploader="onActivityUpload" multiple accept="image/*,application/pdf" :maxFileSize="5000000">
+            <template #empty>
+              <p>Arrastra y suelta archivos aquí para subirlos.</p>
+            </template>
+          </FileUpload>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Cancelar" icon="pi pi-times" text @click="showCreateActivityDialog = false" />
+        <Button label="Crear Actividad" icon="pi pi-check" @click="createActivity" :loading="activitiesStore.loading" />
+      </template>
+    </Dialog>
+
+    <Dialog v-model:visible="showFinishActivityDialog" header="Finalizar Actividad" modal :style="{ width: '500px' }">
+      <div class="flex flex-column gap-3 pt-3">
+        <div class="flex flex-column gap-2">
+          <label>Resumen de lo realizado</label>
+          <Textarea v-model="activityResumen" rows="5" placeholder="Describe brevemente el trabajo realizado..." class="w-full" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label>Adjuntar Archivo de Evidencia (Opcional)</label>
+          <FileUpload name="finishFiles" :customUpload="true" @uploader="onFinishActivityUpload" multiple accept="image/*,application/pdf" :maxFileSize="5000000">
+            <template #empty>
+              <p>Arrastra y suelta archivos aquí para subirlos al finalizar.</p>
+            </template>
+          </FileUpload>
+        </div>
+      </div>
+      <template #footer>
+        <Button label="Cancelar" icon="pi pi-times" text @click="showFinishActivityDialog = false" />
+        <Button label="Guardar y Finalizar" icon="pi pi-check" @click="finishActivity" :loading="activitiesStore.loading" />
+      </template>
+    </Dialog>
+
+    <Dialog v-model:visible="showViewActivityDialog" header="Detalles de la Actividad" modal :style="{ width: '500px' }">
+      <div v-if="selectedActivity" class="flex flex-column gap-3 pt-3">
+        <p><strong>Nombre:</strong> {{ selectedActivity.name }}</p>
+        <p><strong>Descripción:</strong> {{ selectedActivity.description }}</p>
+        <p><strong>Asignado por:</strong> {{ selectedActivity.creado_by?.name || 'Sistema' }}</p>
+        <p><strong>Estado:</strong> <Tag :value="selectedActivity.estado.toUpperCase()" :severity="getSeverity(selectedActivity.estado)" /></p>
+        <p v-if="selectedActivity.resumen"><strong>Resumen:</strong> {{ selectedActivity.resumen }}</p>
+        
+        <div v-if="selectedActivity.files && selectedActivity.files.length > 0">
+          <p><strong>Archivos Adjuntos:</strong></p>
+          <ul class="list-none p-0 m-0">
+            <li v-for="f in selectedActivity.files" :key="f.id" class="mb-2">
+              <a :href="`${config.public.apiBase.replace('/api', '')}${f.file_path}`" target="_blank" class="text-primary no-underline hover:underline">
+                <i :class="f.file_type === 'pdf' ? 'pi pi-file-pdf' : 'pi pi-image'"></i> Ver Archivo
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import { useToast } from 'primevue/usetoast'
+import { useActivitiesStore } from '~/stores/activities'
+import { FilterMatchMode } from 'primevue/api'
 
+const activitiesStore = useActivitiesStore()
 const logs = ref([])
 const activeSession = ref(false)
 const startTime = ref(null)
@@ -184,13 +319,30 @@ const showPasswordDialog = ref(false)
 const changingPassword = ref(false)
 const passwords = ref({ current: '', new: '' })
 
+const activityFilters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+})
+const userFilters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+})
+
+// Activity refs
+const showCreateActivityDialog = ref(false)
+const showFinishActivityDialog = ref(false)
+const showViewActivityDialog = ref(false)
+const selectedActivity = ref(null)
+const activityResumen = ref('')
+const newActivity = ref({ name: '', description: '', asignado_to_id: null })
+let uploadedFiles = []
+let finishUploadedFiles = []
+
 onMounted(() => {
   if (process.client) {
     role.value = localStorage.getItem('role') || 'user'
     fetchLogs()
-    if (role.value === 'admin') {
-      fetchUsers()
-    }
+    activitiesStore.fetchActivities()
+    // Fetch users for assigning activities, regardless of role
+    fetchUsers()
   }
 })
 
@@ -250,10 +402,11 @@ const stopSession = async () => {
   }
 }
 
-// Admin functions
+// Admin & Users functions
 const fetchUsers = async () => {
   try {
-    users.value = await $fetch(`${config.public.apiBase}/admin/users`, { headers: getHeaders() })
+    // Calling the generic users endpoint
+    users.value = await $fetch(`${config.public.apiBase}/users`, { headers: getHeaders() })
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los usuarios', life: 3000 })
   }
@@ -334,5 +487,85 @@ const formatDate = (dateStr) => {
 const formatTime = (date) => {
   if (!date) return ''
   return date.toLocaleTimeString()
+}
+
+// Activities logic
+const getSeverity = (estado) => {
+  switch (estado) {
+    case 'pendiente': return 'info';
+    case 'iniciado': return 'success';
+    case 'finalizado': return 'warning';
+    default: return 'info';
+  }
+}
+
+const onActivityUpload = (event) => {
+  uploadedFiles = event.files;
+}
+
+const onFinishActivityUpload = (event) => {
+  finishUploadedFiles = event.files;
+}
+
+const createActivity = async () => {
+  if (!newActivity.value.name) {
+    toast.add({ severity: 'warn', summary: 'Atención', detail: 'El nombre es obligatorio', life: 3000 })
+    return
+  }
+  const formData = new FormData();
+  formData.append('name', newActivity.value.name);
+  formData.append('description', newActivity.value.description);
+  if (newActivity.value.asignado_to_id) {
+    formData.append('asignado_to_id', newActivity.value.asignado_to_id);
+  }
+  for (let i = 0; i < uploadedFiles.length; i++) {
+    formData.append('files', uploadedFiles[i]);
+  }
+
+  try {
+    await activitiesStore.createActivity(formData);
+    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Actividad creada', life: 3000 });
+    showCreateActivityDialog.value = false;
+    newActivity.value = { name: '', description: '', asignado_to_id: null };
+    uploadedFiles = [];
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear la actividad', life: 3000 });
+  }
+}
+
+const updateActivityStatus = async (id, estado) => {
+  try {
+    await activitiesStore.updateActivityStatus(id, estado);
+    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Estado actualizado', life: 3000 });
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar', life: 3000 });
+  }
+}
+
+const openFinishActivityDialog = (id) => {
+  selectedActivity.value = activitiesStore.activities.find(a => a.id === id);
+  activityResumen.value = '';
+  finishUploadedFiles = [];
+  showFinishActivityDialog.value = true;
+}
+
+const finishActivity = async () => {
+  if (!activityResumen.value) {
+    toast.add({ severity: 'warn', summary: 'Atención', detail: 'El resumen es obligatorio', life: 3000 })
+    return
+  }
+  try {
+    await activitiesStore.updateActivityStatus(selectedActivity.value.id, 'finalizado', activityResumen.value, finishUploadedFiles);
+    toast.add({ severity: 'success', summary: 'Éxito', detail: 'Actividad finalizada', life: 3000 });
+    showFinishActivityDialog.value = false;
+    finishUploadedFiles = [];
+  } catch (err) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo finalizar', life: 3000 });
+  }
+}
+
+const viewActivity = (activity) => {
+  selectedActivity.value = activity;
+  showViewActivityDialog.value = true;
 }
 </script>

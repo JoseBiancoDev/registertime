@@ -32,7 +32,7 @@ func main() {
 	// CORS
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
@@ -40,6 +40,9 @@ func main() {
 		}
 		c.Next()
 	})
+
+	// Static files for uploads
+	r.Static("/uploads", "./uploads")
 
 	// Auth & Password routes
 	r.POST("/api/login", handlers.Login)
@@ -50,11 +53,17 @@ func main() {
 	authorized := r.Group("/api")
 	authorized.Use(middleware.AuthMiddleware())
 	{
+		authorized.GET("/users", handlers.GetUsers) // Generic user list for assignations
 		authorized.GET("/logs", handlers.GetLogs)
 		authorized.POST("/logs/start", handlers.StartLog)
 		authorized.POST("/logs/stop", handlers.StopLog)
 		authorized.GET("/report", handlers.GenerateExcelReport)
 		authorized.POST("/change-password", handlers.ChangePassword)
+
+		// Activities
+		authorized.GET("/activities", handlers.GetActivities)
+		authorized.POST("/activities", handlers.CreateActivity)
+		authorized.PATCH("/activities/:id/status", handlers.UpdateActivityStatus)
 
 		// Admin routes
 		admin := authorized.Group("/admin")

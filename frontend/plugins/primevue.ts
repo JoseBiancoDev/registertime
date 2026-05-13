@@ -12,6 +12,10 @@ import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
 import Dialog from 'primevue/dialog'
 import Tooltip from 'primevue/tooltip'
+import Textarea from 'primevue/textarea'
+import FileUpload from 'primevue/fileupload'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
 
 export default defineNuxtPlugin((nuxtApp) => {
     nuxtApp.vueApp.use(PrimeVue, { ripple: true })
@@ -27,4 +31,8 @@ export default defineNuxtPlugin((nuxtApp) => {
     nuxtApp.vueApp.component('Dropdown', Dropdown)
     nuxtApp.vueApp.component('Calendar', Calendar)
     nuxtApp.vueApp.component('Dialog', Dialog)
+    nuxtApp.vueApp.component('Textarea', Textarea)
+    nuxtApp.vueApp.component('FileUpload', FileUpload)
+    nuxtApp.vueApp.component('TabView', TabView)
+    nuxtApp.vueApp.component('TabPanel', TabPanel)
 })

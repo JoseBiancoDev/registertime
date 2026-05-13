@@ -33,3 +33,41 @@ type TimeLog struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 }
+
+type Activity struct {
+	ID           uint           `gorm:"primaryKey" json:"id"`
+	Name         string         `gorm:"not null" json:"name"`
+	Description  string         `gorm:"type:text" json:"description"`
+	IndicadoPor  string         `json:"indicado_por"`
+	Resumen      string         `gorm:"type:text" json:"resumen"`
+	Estado       string         `gorm:"default:'pendiente'" json:"estado"` // pendiente, iniciado, finalizado
+	AsignadoToID uint           `json:"asignado_to_id"`
+	AsignadoTo   User           `gorm:"foreignKey:AsignadoToID" json:"asignado_to"`
+	CreadoByID   uint           `gorm:"not null" json:"creado_by_id"`
+	CreadoBy     User           `gorm:"foreignKey:CreadoByID" json:"creado_by"`
+	Files        []ActivityFile `json:"files,omitempty"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+type ActivityFile struct {
+	ID         uint           `gorm:"primaryKey" json:"id"`
+	ActivityID uint           `gorm:"not null" json:"activity_id"`
+	FilePath   string         `gorm:"not null" json:"file_path"`
+	FileType   string         `gorm:"not null" json:"file_type"` // e.g., image/png, application/pdf
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// Scopes
+func FilterByUser(userID uint, role string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if role == "admin" {
+			return db // Admins can see all activities
+		}
+		// Regular users can see activities assigned to them or created by them
+		return db.Where("asignado_to_id = ? OR creado_by_id = ?", userID, userID)
+	}
+}
