@@ -233,7 +233,7 @@
         </div>
         <div class="flex flex-column gap-2">
           <label>Adjuntar Archivos (Imágenes o PDF)</label>
-          <FileUpload name="files" :customUpload="true" @uploader="onActivityUpload" multiple accept="image/*,application/pdf" :maxFileSize="5000000">
+          <FileUpload ref="createFileUpload" name="files" multiple accept="image/*,application/pdf" :maxFileSize="5000000" :showUploadButton="false" :showCancelButton="false" @select="onActivitySelect" @clear="onActivityClear" @remove="onActivityRemove">
             <template #empty>
               <p>Arrastra y suelta archivos aquí para subirlos.</p>
             </template>
@@ -254,7 +254,7 @@
         </div>
         <div class="flex flex-column gap-2">
           <label>Adjuntar Archivo de Evidencia (Opcional)</label>
-          <FileUpload name="finishFiles" :customUpload="true" @uploader="onFinishActivityUpload" multiple accept="image/*,application/pdf" :maxFileSize="5000000">
+          <FileUpload ref="finishFileUpload" name="finishFiles" multiple accept="image/*,application/pdf" :maxFileSize="5000000" :showUploadButton="false" :showCancelButton="false" @select="onFinishActivitySelect" @clear="onFinishActivityClear" @remove="onFinishActivityRemove">
             <template #empty>
               <p>Arrastra y suelta archivos aquí para subirlos al finalizar.</p>
             </template>
@@ -507,13 +507,16 @@ const getSeverity = (estado) => {
   }
 }
 
-const onActivityUpload = (event) => {
-  uploadedFiles = event.files;
-}
+const onActivitySelect = (event) => { uploadedFiles = event.files; }
+const onActivityClear = () => { uploadedFiles = []; }
+const onActivityRemove = (event) => { uploadedFiles = uploadedFiles.filter(f => f.name !== event.file.name); }
 
-const onFinishActivityUpload = (event) => {
-  finishUploadedFiles = event.files;
-}
+const onFinishActivitySelect = (event) => { finishUploadedFiles = event.files; }
+const onFinishActivityClear = () => { finishUploadedFiles = []; }
+const onFinishActivityRemove = (event) => { finishUploadedFiles = finishUploadedFiles.filter(f => f.name !== event.file.name); }
+
+const createFileUpload = ref(null)
+const finishFileUpload = ref(null)
 
 const createActivity = async () => {
   if (!newActivity.value.name) {
@@ -536,6 +539,9 @@ const createActivity = async () => {
     showCreateActivityDialog.value = false;
     newActivity.value = { name: '', description: '', asignado_to_id: null };
     uploadedFiles = [];
+    if (createFileUpload.value) {
+      createFileUpload.value.clear();
+    }
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear la actividad', life: 3000 });
   }
@@ -567,6 +573,9 @@ const finishActivity = async () => {
     toast.add({ severity: 'success', summary: 'Éxito', detail: 'Actividad finalizada', life: 3000 });
     showFinishActivityDialog.value = false;
     finishUploadedFiles = [];
+    if (finishFileUpload.value) {
+      finishFileUpload.value.clear();
+    }
   } catch (err) {
     toast.add({ severity: 'error', summary: 'Error', detail: 'No se pudo finalizar', life: 3000 });
   }
