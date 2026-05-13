@@ -277,11 +277,19 @@
         
         <div v-if="selectedActivity.files && selectedActivity.files.length > 0">
           <p><strong>Archivos Adjuntos:</strong></p>
-          <ul class="list-none p-0 m-0">
-            <li v-for="f in selectedActivity.files" :key="f.id" class="mb-2">
-              <a :href="`${config.public.apiBase.replace('/api', '')}${f.file_path}`" target="_blank" class="text-primary no-underline hover:underline">
-                <i :class="f.file_type === 'pdf' ? 'pi pi-file-pdf' : 'pi pi-image'"></i> Ver Archivo
-              </a>
+          <ul class="list-none p-0 m-0 flex flex-column gap-3">
+            <li v-for="f in selectedActivity.files" :key="f.id" class="p-3 border-1 border-round surface-border">
+              <div class="flex justify-content-between align-items-center mb-2">
+                <span class="text-sm text-color-secondary">Subido por: <strong>{{ f.uploaded_by?.name || 'Usuario' }}</strong></span>
+              </div>
+              <div v-if="f.file_type === 'image'">
+                <Image :src="`${config.public.apiBase.replace('/api', '')}${f.file_path}`" alt="Evidencia" width="150" preview />
+              </div>
+              <div v-else>
+                <a :href="`${config.public.apiBase.replace('/api', '')}${f.file_path}`" target="_blank" class="text-primary no-underline hover:underline p-button p-button-outlined p-button-sm">
+                  <i class="pi pi-file-pdf mr-2"></i> Ver PDF
+                </a>
+              </div>
             </li>
           </ul>
         </div>

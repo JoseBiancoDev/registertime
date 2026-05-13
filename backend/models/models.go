@@ -52,13 +52,15 @@ type Activity struct {
 }
 
 type ActivityFile struct {
-	ID         uint           `gorm:"primaryKey" json:"id"`
-	ActivityID uint           `gorm:"not null" json:"activity_id"`
-	FilePath   string         `gorm:"not null" json:"file_path"`
-	FileType   string         `gorm:"not null" json:"file_type"` // e.g., image/png, application/pdf
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
+	ID           uint           `gorm:"primaryKey" json:"id"`
+	ActivityID   uint           `gorm:"not null" json:"activity_id"`
+	FilePath     string         `gorm:"not null" json:"file_path"`
+	FileType     string         `gorm:"not null" json:"file_type"` // e.g., image/png, application/pdf
+	UploadedByID uint           `json:"uploaded_by_id"`
+	UploadedBy   User           `gorm:"foreignKey:UploadedByID" json:"uploaded_by"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // Scopes

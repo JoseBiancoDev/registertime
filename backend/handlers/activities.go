@@ -21,7 +21,7 @@ func GetActivities(c *gin.Context) {
 	var activities []models.Activity
 	
 	err := utils.DB.Scopes(models.FilterByUser(userID.(uint), role.(string))).
-		Preload("Files").
+		Preload("Files.UploadedBy").
 		Preload("AsignadoTo").
 		Preload("CreadoBy").
 		Order("created_at desc").
@@ -108,9 +108,10 @@ func CreateActivity(c *gin.Context) {
 			}
 
 			activityFile := models.ActivityFile{
-				ActivityID: activity.ID,
-				FilePath:   fmt.Sprintf("/uploads/%s", filename),
-				FileType:   fileType,
+				ActivityID:   activity.ID,
+				FilePath:     fmt.Sprintf("/uploads/%s", filename),
+				FileType:     fileType,
+				UploadedByID: userID.(uint),
 			}
 			if err := tx.Create(&activityFile).Error; err != nil {
 				tx.Rollback()
@@ -123,7 +124,7 @@ func CreateActivity(c *gin.Context) {
 	tx.Commit()
 
 	// Fetch created activity with preloads to return
-	utils.DB.Preload("Files").Preload("AsignadoTo").Preload("CreadoBy").First(&activity, activity.ID)
+	utils.DB.Preload("Files.UploadedBy").Preload("AsignadoTo").Preload("CreadoBy").First(&activity, activity.ID)
 	c.JSON(http.StatusCreated, activity)
 }
 
@@ -197,9 +198,10 @@ func UpdateActivityStatus(c *gin.Context) {
 			}
 
 			activityFile := models.ActivityFile{
-				ActivityID: activity.ID,
-				FilePath:   fmt.Sprintf("/uploads/%s", filename),
-				FileType:   fileType,
+				ActivityID:   activity.ID,
+				FilePath:     fmt.Sprintf("/uploads/%s", filename),
+				FileType:     fileType,
+				UploadedByID: userID.(uint),
 			}
 			if err := tx.Create(&activityFile).Error; err != nil {
 				tx.Rollback()
@@ -212,6 +214,6 @@ func UpdateActivityStatus(c *gin.Context) {
 	tx.Commit()
 
 	// Load the updated files and relations to return them
-	utils.DB.Preload("Files").Preload("AsignadoTo").Preload("CreadoBy").First(&activity, activity.ID)
+	utils.DB.Preload("Files.UploadedBy").Preload("AsignadoTo").Preload("CreadoBy").First(&activity, activity.ID)
 	c.JSON(http.StatusOK, activity)
 }
